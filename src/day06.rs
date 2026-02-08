@@ -4,6 +4,7 @@ enum Instruction {
     TurnOff,
     Toggle,
 }
+
 fn part1(input: &str) -> u32 {
     let lines: Vec<_> = input
         .lines()
@@ -22,12 +23,12 @@ fn part1(input: &str) -> u32 {
             let (_, end) = rest.rsplit_once(' ').unwrap();
 
             let start = start.split_once(',').unwrap();
-            let start: (u16, u16) = (start.0.parse().unwrap(), start.1.parse().unwrap());
+            let start: (u16, u16) = (parse(start.0), parse(start.1));
 
             let end = end.split_once(',').unwrap();
-            let end: (u16, u16) = (end.0.parse().unwrap(), end.1.parse().unwrap());
+            let end: (u16, u16) = (parse(end.0), parse(end.1));
 
-            (inst, start.0..=end.0, start.1..=end.1)
+            (inst, start, end)
         })
         .collect();
 
@@ -35,20 +36,39 @@ fn part1(input: &str) -> u32 {
     for y in 0..1000 {
         for x in 0..1000 {
             let mut state = false;
-            for (inst, xrange, yrange) in &lines {
-                if xrange.contains(&x) && yrange.contains(&y) {
+            let mut toggle = false;
+            for (inst, start, end) in lines.iter().rev() {
+                if start.0 <= x && x <= end.0 && start.1 <= y && y <= end.1 {
                     match inst {
-                        Instruction::TurnOn => state = true,
-                        Instruction::TurnOff => state = false,
-                        Instruction::Toggle => state = !state,
+                        Instruction::TurnOn => {
+                            state = true;
+                            break;
+                        }
+                        Instruction::TurnOff => {
+                            state = false;
+                            break;
+                        }
+                        Instruction::Toggle => toggle = !toggle,
                     }
                 }
             }
-            sum += if state { 1 } else { 0 };
+            if toggle {
+                state = !state
+            }
+            sum += u32::from(state);
         }
     }
 
     sum
+}
+
+fn parse(s: &str) -> u16 {
+    let mut out = 0;
+    for i in s.bytes().take(3) {
+        out *= 10;
+        out += u16::from(i - b'0');
+    }
+    out
 }
 
 fn part2(input: &str) -> u32 {
@@ -69,12 +89,12 @@ fn part2(input: &str) -> u32 {
             let (_, end) = rest.rsplit_once(' ').unwrap();
 
             let start = start.split_once(',').unwrap();
-            let start: (u16, u16) = (start.0.parse().unwrap(), start.1.parse().unwrap());
+            let start: (u16, u16) = (parse(start.0), parse(start.1));
 
             let end = end.split_once(',').unwrap();
-            let end: (u16, u16) = (end.0.parse().unwrap(), end.1.parse().unwrap());
+            let end: (u16, u16) = (parse(end.0), parse(end.1));
 
-            (inst, start.0..=end.0, start.1..=end.1)
+            (inst, start, end)
         })
         .collect();
 
@@ -82,8 +102,8 @@ fn part2(input: &str) -> u32 {
     for y in 0..1000 {
         for x in 0..1000 {
             let mut brightness: u32 = 0;
-            for (inst, xrange, yrange) in &lines {
-                if xrange.contains(&x) && yrange.contains(&y) {
+            for (inst, start, end) in &lines {
+                if start.0 <= x && x <= end.0 && start.1 <= y && y <= end.1 {
                     match inst {
                         Instruction::TurnOn => brightness += 1,
                         Instruction::TurnOff => brightness = brightness.saturating_sub(1),
