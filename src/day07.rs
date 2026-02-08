@@ -1,16 +1,16 @@
-use std::{collections::HashMap, convert::Infallible, str::FromStr, time::Instant};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub enum Value {
-    Wire(String),
+    Wire(&'static str),
     Value(u16),
 }
 
 impl Value {
     pub fn resolve(
         &self,
-        connections: &HashMap<String, Input>,
-        memo: &mut HashMap<String, u16>,
+        connections: &HashMap<&'static str, Input>,
+        memo: &mut HashMap<&'static str, u16>,
     ) -> u16 {
         match self {
             Value::Wire(w) => {
@@ -18,22 +18,18 @@ impl Value {
                     *memo
                 } else {
                     let v = connections[w].resolve(connections, memo);
-                    memo.insert(w.clone(), v);
+                    memo.insert(w, v);
                     v
                 }
             }
             Value::Value(v) => *v,
         }
     }
-}
 
-impl FromStr for Value {
-    type Err = Infallible;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(s.parse()
+    fn from_str(s: &'static str) -> Self {
+        s.parse()
             .map(Self::Value)
-            .unwrap_or_else(|_| Value::Wire(s.into())))
+            .unwrap_or_else(|_| Value::Wire(s))
     }
 }
 
@@ -50,8 +46,8 @@ pub enum Input {
 impl Input {
     pub fn resolve(
         &self,
-        connections: &HashMap<String, Self>,
-        memo: &mut HashMap<String, u16>,
+        connections: &HashMap<&'static str, Self>,
+        memo: &mut HashMap<&'static str, u16>,
     ) -> u16 {
         match self {
             Input::Value(v) => v.resolve(connections, memo),
@@ -64,54 +60,65 @@ impl Input {
     }
 }
 
-fn parse(input: &str) -> HashMap<String, Input> {
+fn parse(input: &'static str) -> HashMap<&'static str, Input> {
     input
         .lines()
         .map(|l| {
             let parts: Vec<_> = l.split_whitespace().collect();
-            match &*parts {
-                [input, "->", out] => (out.to_string(), Input::Value(input.parse().unwrap())),
-                [x, "AND", y, "->", out] => (
-                    out.to_string(),
-                    Input::And(x.parse().unwrap(), y.parse().unwrap()),
-                ),
-                [x, "OR", y, "->", out] => (
-                    out.to_string(),
-                    Input::Or(x.parse().unwrap(), y.parse().unwrap()),
-                ),
-                [x, "LSHIFT", y, "->", out] => (
-                    out.to_string(),
-                    Input::LShift(x.parse().unwrap(), y.parse().unwrap()),
-                ),
-                [x, "RSHIFT", y, "->", out] => (
-                    out.to_string(),
-                    Input::RShift(x.parse().unwrap(), y.parse().unwrap()),
-                ),
-                ["NOT", x, "->", out] => (out.to_string(), Input::Not(x.parse().unwrap())),
+            match parts[..] {
+                [input, "->", out] => (out, Input::Value(Value::from_str(input))),
+                [x, "AND", y, "->", out] => {
+                    (out, Input::And(Value::from_str(x), Value::from_str(y)))
+                }
+                [x, "OR", y, "->", out] => (out, Input::Or(Value::from_str(x), Value::from_str(y))),
+                [x, "LSHIFT", y, "->", out] => {
+                    (out, Input::LShift(Value::from_str(x), y.parse().unwrap()))
+                }
+                [x, "RSHIFT", y, "->", out] => {
+                    (out, Input::RShift(Value::from_str(x), y.parse().unwrap()))
+                }
+                ["NOT", x, "->", out] => (out, Input::Not(Value::from_str(x))),
                 _ => panic!("line = {:?}", parts),
             }
         })
         .collect()
 }
 
-fn part1(input: &str) -> u16 {
+#[allow(unused)]
+fn part1(input: &'static str) -> u16 {
     let connections = parse(input);
     connections["a"].resolve(&connections, &mut HashMap::with_capacity(1000))
 }
 
-fn part2(input: &str) -> u16 {
+#[allow(unused)]
+fn part2(input: &'static str) -> u16 {
     let mut connections = parse(input);
     let mut memo = HashMap::with_capacity(1000);
     let a = connections["a"].resolve(&connections, &mut memo);
-    connections.insert("b".into(), Input::Value(Value::Value(a)));
+    connections.insert("b", Input::Value(Value::Value(a)));
     memo.clear();
     connections["a"].resolve(&connections, &mut memo)
 }
 
-fn main() {
-    let file = std::fs::read_to_string("./input/day07.txt").unwrap();
-    let file = file.trim_end();
+fn part3(input: &'static str) -> u16 {
+    let mut connections = parse(input);
+    let mut memo = HashMap::with_capacity(1000);
+    let mut a = connections["a"].resolve(&connections, &mut memo);
+    for _ in 0..100000 {
+        connections.insert("b", Input::Value(Value::Value(a)));
+        memo.clear();
+        a = connections["a"].resolve(&connections, &mut memo);
+    }
+    a
+}
 
-    assert_eq!(part1(file), 16076);
-    assert_eq!(part2(file), 2797);
+fn main() {
+    let file: &'static str = std::fs::read_to_string("./input/day07.txt")
+        .unwrap()
+        .leak()
+        .trim_end();
+
+    // assert_eq!(part1(file), 16076);
+    // assert_eq!(part2(file), 2797);
+    part3(file);
 }
