@@ -2,7 +2,6 @@ use md5::{
     Digest, Md5,
     digest::{consts::U16, generic_array::GenericArray},
 };
-use std::io::Write;
 
 fn write10(mut n: u32, buf: &mut [u8]) -> usize {
     let mut i = 0;
