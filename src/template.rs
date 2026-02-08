@@ -7,7 +7,7 @@ fn part2(_input: &str) -> u32 {
 }
 
 fn main() {
-    let file = std::fs::read_to_string("./input/day05.txt").unwrap();
+    let file = std::fs::read_to_string(concat!("./input/", module_path!(), ".txt")).unwrap();
     let file = file.trim_end();
 
     assert_eq!(part1(file), 254575);
