@@ -84,13 +84,11 @@ fn parse(input: &'static str) -> HashMap<&'static str, Input> {
         .collect()
 }
 
-#[allow(unused)]
 fn part1(input: &'static str) -> u16 {
     let connections = parse(input);
     connections["a"].resolve(&connections, &mut HashMap::with_capacity(1000))
 }
 
-#[allow(unused)]
 fn part2(input: &'static str) -> u16 {
     let mut connections = parse(input);
     let mut memo = HashMap::with_capacity(1000);
@@ -100,25 +98,12 @@ fn part2(input: &'static str) -> u16 {
     connections["a"].resolve(&connections, &mut memo)
 }
 
-fn part3(input: &'static str) -> u16 {
-    let mut connections = parse(input);
-    let mut memo = HashMap::with_capacity(1000);
-    let mut a = connections["a"].resolve(&connections, &mut memo);
-    for _ in 0..100000 {
-        connections.insert("b", Input::Value(Value::Value(a)));
-        memo.clear();
-        a = connections["a"].resolve(&connections, &mut memo);
-    }
-    a
-}
-
 fn main() {
     let file: &'static str = std::fs::read_to_string("./input/day07.txt")
         .unwrap()
         .leak()
         .trim_end();
 
-    // assert_eq!(part1(file), 16076);
-    // assert_eq!(part2(file), 2797);
-    part3(file);
+    assert_eq!(part1(file), 16076);
+    assert_eq!(part2(file), 2797);
 }
