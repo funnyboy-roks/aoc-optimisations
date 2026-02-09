@@ -1,19 +1,26 @@
 fn part1(input: &str) -> u32 {
-    let mut next = String::with_capacity(4_000_000);
-    let mut current = String::from(input);
+    let mut next = Vec::with_capacity(4_000_000);
+    let mut current = input.as_bytes().to_vec();
     current.reserve(4_000_000);
     for _ in 0..40 {
-        let mut rest = &*current;
-        while !rest.is_empty() {
-            let c = rest.chars().next().unwrap();
-            let next_rest = rest.trim_start_matches(c);
-            let len = rest.len() - next_rest.len();
-            next.push(char::from(len as u8 + b'0'));
-            next.push(c);
-            rest = next_rest;
+        let bytes = &*current;
+        let mut run = 1;
+        let mut cb = bytes[0];
+        for &b in &bytes[1..] {
+            if b == cb {
+                run += 1;
+            } else {
+                next.push(run + b'0');
+                next.push(cb);
+                cb = b;
+                run = 1;
+            }
         }
+        next.push(run + b'0');
+        next.push(cb);
+
         current.clear();
-        current.push_str(&next);
+        current.extend(&next);
         next.clear();
     }
 
@@ -21,21 +28,28 @@ fn part1(input: &str) -> u32 {
 }
 
 fn part2(input: &str) -> u32 {
-    let mut next = String::with_capacity(4_000_000);
-    let mut current = String::from(input);
+    let mut next = Vec::with_capacity(4_000_000);
+    let mut current = input.as_bytes().to_vec();
     current.reserve(4_000_000);
     for _ in 0..50 {
-        let mut rest = &*current;
-        while !rest.is_empty() {
-            let c = rest.chars().next().unwrap();
-            let next_rest = rest.trim_start_matches(c);
-            let len = rest.len() - next_rest.len();
-            next.push(char::from(len as u8 + b'0'));
-            next.push(c);
-            rest = next_rest;
+        let bytes = &*current;
+        let mut run = 1;
+        let mut cb = bytes[0];
+        for &b in &bytes[1..] {
+            if b == cb {
+                run += 1;
+            } else {
+                next.push(run + b'0');
+                next.push(cb);
+                cb = b;
+                run = 1;
+            }
         }
+        next.push(run + b'0');
+        next.push(cb);
+
         current.clear();
-        current.push_str(&next);
+        current.extend(&next);
         next.clear();
     }
 
